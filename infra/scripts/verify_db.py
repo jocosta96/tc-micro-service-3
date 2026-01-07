@@ -31,8 +31,17 @@ def verify_database_tables():
         
         try:
             # Force re-initialization
-            subprocess.run(['python', 'infra/scripts/database_migration.py', 'init'], check=True)
-            subprocess.run(['python', 'infra/scripts/init_db.py', '--sample-data'], check=True)
+            # nosec: B603, B607 - Using hardcoded script paths, not user input
+            subprocess.run(
+                ['python', 'infra/scripts/database_migration.py', 'init'],
+                check=True,
+                shell=False  # Explicitly disable shell for security
+            )  # nosec: B603, B607
+            subprocess.run(
+                ['python', 'infra/scripts/init_db.py', '--sample-data'],
+                check=True,
+                shell=False  # Explicitly disable shell for security
+            )  # nosec: B603, B607
             print("Database re-initialization completed")
             return True
         except subprocess.CalledProcessError as e:

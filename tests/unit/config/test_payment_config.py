@@ -117,6 +117,7 @@ class TestPaymentConfig:
         with patch.dict(os.environ, env_vars, clear=True):
             config = PaymentConfig()
         
-        assert config.order_api_user == ""
-        assert config.order_api_password == ""
-        assert config.webhook_secret == ""
+        # nosec: B105 - These are test assertions for empty values, not hardcoded passwords
+        assert config.order_api_user == ""  # nosec: B105
+        assert config.order_api_password == ""  # nosec: B105
+        assert config.webhook_secret == ""  # nosec: B105

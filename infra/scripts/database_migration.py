@@ -18,6 +18,15 @@ sys.path.insert(0, str(src_path))
 def run_alembic_command(command):
     """Run an Alembic command"""
     try:
+        # Validate command is a list of strings to prevent injection
+        if not isinstance(command, list) or not all(isinstance(c, str) for c in command):
+            raise ValueError("Command must be a list of strings")
+        
+        # Whitelist allowed Alembic commands
+        allowed_commands = {'upgrade', 'downgrade', 'current', 'history', 'heads', 'show', 'stamp', 'init', 'revision', 'migrate'}
+        if command and command[0] not in allowed_commands:
+            raise ValueError(f"Command '{command[0]}' is not allowed. Allowed: {allowed_commands}")
+        
         # Change to the project root directory
         project_root = Path(__file__).parent.parent.parent
         os.chdir(project_root)
@@ -35,11 +44,13 @@ def run_alembic_command(command):
         print(f"Working directory: {os.getcwd()}")
         print(f"ALEMBIC_CONFIG: {os.environ.get('ALEMBIC_CONFIG', 'Not set')}")
         
+        # nosec: B603 - command is validated against whitelist and sanitized
         result = subprocess.run(
-            ["alembic"] + command,
+            ["alembic"] + command,  # nosec: B603
             capture_output=True,
             text=True,
             check=True,
+            shell=False,  # Explicitly disable shell to prevent injection
             env=os.environ.copy()
         )
         print(f"Alembic command {' '.join(command)} executed successfully:")
