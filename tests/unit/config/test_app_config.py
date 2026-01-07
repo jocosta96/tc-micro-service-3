@@ -4,7 +4,6 @@ Unit tests for app_config module.
 Phase 3: Controllers, Routes, Config, Logs
 Coverage Target: 80%+
 """
-import pytest
 import os
 from unittest.mock import patch
 

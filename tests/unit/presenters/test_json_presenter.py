@@ -16,7 +16,6 @@ from src.application.exceptions import (
     CustomerAlreadyExistsException,
     CustomerBusinessRuleException,
     IngredientValidationException,
-    IngredientNotFoundException,
     ProductValidationException,
     ProductNotFoundException,
     AuthenticationException,

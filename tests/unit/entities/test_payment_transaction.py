@@ -4,9 +4,8 @@ Unit tests for PaymentTransaction entity.
 Phase 1: Entities + DTOs
 Coverage Target: 95%+
 """
-import pytest
 from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from uuid import UUID
 
 from src.entities.payment_transaction import (

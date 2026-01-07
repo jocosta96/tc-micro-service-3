@@ -4,12 +4,9 @@ Unit tests for DI container module.
 Phase 3: Controllers, Routes, Config, Logs
 Coverage Target: 90%+
 """
-import pytest
 from unittest.mock import patch, MagicMock
 
 from src.adapters.di.container import Container, container
-from src.adapters.gateways.dynamo_payment_repository import DynamoPaymentRepository
-from src.adapters.presenters.implementations.json_presenter import JSONPresenter
 
 
 class TestContainer:

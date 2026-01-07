@@ -6,11 +6,9 @@ Coverage Target: 70%+
 """
 import pytest
 from fastapi.testclient import TestClient
-from datetime import datetime, timezone
 from unittest.mock import patch, MagicMock, AsyncMock
 
 from src.main import app
-from src.entities.payment_transaction import PaymentTransaction, PaymentStatus
 
 
 @pytest.fixture
