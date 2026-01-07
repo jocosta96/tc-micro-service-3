@@ -28,8 +28,8 @@ class TestPaymentConfig:
         assert config.endpoint_url == ""
         assert config.order_api_host == "http://order-service:8000"
         assert config.order_api_user == ""
-        assert config.order_api_password == ""
-        assert config.webhook_secret == ""
+        assert config.order_api_password == ""  # nosec - test value
+        assert config.webhook_secret == ""  # nosec - test value
         assert config.callback_timeout_seconds == 10
 
     def test_payment_config_from_environment(self):
@@ -57,8 +57,8 @@ class TestPaymentConfig:
         assert config.endpoint_url == "http://localhost:8000"
         assert config.order_api_host == "https://api.orders.prod"
         assert config.order_api_user == "payment-service"
-        assert config.order_api_password == "secret123"
-        assert config.webhook_secret == "webhook-key-456"
+        assert config.order_api_password == "secret123"  # nosec - test value
+        assert config.webhook_secret == "webhook-key-456"  # nosec - test value
         assert config.callback_timeout_seconds == 30
 
     def test_payment_config_partial_environment(self):

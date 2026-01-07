@@ -149,7 +149,8 @@ class DatabaseConfig:
                 health["ssm_available"] = self._ssm_client.health_check()
                 if health["ssm_available"]:
                     health["configuration_source"] = "ssm_parameter_store"
-            except Exception:
+            except Exception:  # nosec - SSM unavailability is non-critical for health check
+                # SSM client is optional, continue without it
                 pass
         
         return health

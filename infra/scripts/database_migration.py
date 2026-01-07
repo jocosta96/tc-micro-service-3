@@ -6,7 +6,7 @@ This script handles database schema migrations using Alembic.
 
 import os
 import sys
-import subprocess
+import subprocess #nosec
 from pathlib import Path
 
 # Add the parent directory to Python path for imports
