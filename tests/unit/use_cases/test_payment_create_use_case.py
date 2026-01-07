@@ -6,7 +6,7 @@ Coverage Target: 90%+
 """
 import pytest
 from datetime import datetime, timezone, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from src.application.use_cases.payment_use_cases import PaymentCreateUseCase
 from src.application.dto.implementation.payment_dto import (

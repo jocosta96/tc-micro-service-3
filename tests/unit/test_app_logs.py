@@ -4,11 +4,8 @@ Unit tests for app_logs module.
 Phase 3: Controllers, Routes, Config, Logs
 Coverage Target: 80%+
 """
-import pytest
-import logging
 import json
 from unittest.mock import patch, MagicMock
-from datetime import datetime
 
 from src.app_logs import (
     LogLevels,

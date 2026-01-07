@@ -4,7 +4,6 @@ Unit tests for main module (FastAPI app creation).
 Phase 3: Controllers, Routes, Config, Logs
 Coverage Target: 80%+
 """
-import pytest
 from unittest.mock import patch, MagicMock
 from fastapi import FastAPI
 
