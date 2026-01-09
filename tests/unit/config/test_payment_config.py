@@ -43,7 +43,7 @@ class TestPaymentConfig:
         assert config.region_name == "us-east-1"
         assert config.endpoint_url == ""
         assert config.order_api_host == "http://order-service:8000"
-        assert config.order_token == ""
+        assert config.order_token == ""  # nosec - test value
         assert config.callback_timeout_seconds == 10
 
     def test_payment_config_from_environment(self):
@@ -74,7 +74,7 @@ class TestPaymentConfig:
         assert config.region_name == "eu-west-1"
         assert config.endpoint_url == "http://localhost:8000"
         assert config.order_api_host == "https://api.orders.prod"
-        assert config.order_token == "token-123"
+        assert config.order_token == "token-123"  # nosec - test value
         assert config.callback_timeout_seconds == 30
 
     def test_payment_config_partial_environment(self):

@@ -31,7 +31,7 @@ def setup_payment_table():
     region = os.getenv("PAYMENT_AWS_REGION", "us-east-1")
     endpoint = os.getenv("PAYMENT_DYNAMO_ENDPOINT", None)  # Para DynamoDB local
     
-    print(f"🔧 Configurando DynamoDB Payment Service...")
+    print("🔧 Configurando DynamoDB Payment Service...")
     print(f"   Table: {table_name}")
     print(f"   Region: {region}")
     print(f"   Endpoint: {endpoint or 'AWS default'}")
@@ -52,7 +52,7 @@ def setup_payment_table():
         
         # Listar GSIs
         gsis = response['Table'].get('GlobalSecondaryIndexes', [])
-        print(f"📋 Índices existentes:")
+        print("📋 Índices existentes:")
         for gsi in gsis:
             print(f"   - {gsi['IndexName']}")
         

@@ -35,7 +35,7 @@ class TestPaymentCallbackUseCase:
         """Mock payment_config module."""
         with patch("src.application.use_cases.payment_use_cases.payment_config") as mock_config:
             mock_config.order_api_host = "http://order-service:8000"
-            mock_config.order_token = ""
+            mock_config.order_token = ""  # nosec - test value
             mock_config.callback_timeout_seconds = 10
             yield mock_config
 
@@ -164,7 +164,7 @@ class TestPaymentCallbackUseCase:
         When: execute() is called
         Then: Authorization header with token is sent
         """
-        mock_payment_config.order_token = "Bearer secret-token-123"
+        mock_payment_config.order_token = "Bearer secret-token-123"  # nosec - test value
         
         transaction = PaymentTransaction.new(order_id=100, amount=25.0)
         transaction.id = "tx-auth"
@@ -192,7 +192,7 @@ class TestPaymentCallbackUseCase:
         When: execute() is called
         Then: No Authorization header is sent
         """
-        mock_payment_config.order_token = ""
+        mock_payment_config.order_token = ""  # nosec - test value
         
         transaction = PaymentTransaction.new(order_id=200, amount=50.0)
         transaction.id = "tx-no-auth"
