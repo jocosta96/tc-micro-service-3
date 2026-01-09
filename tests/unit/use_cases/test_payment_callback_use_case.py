@@ -7,7 +7,6 @@ Coverage Target: 90%+
 import pytest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, AsyncMock, patch
-import base64
 
 from src.application.use_cases.payment_use_cases import PaymentCallbackUseCase
 from src.entities.payment_transaction import (
@@ -36,8 +35,7 @@ class TestPaymentCallbackUseCase:
         """Mock payment_config module."""
         with patch("src.application.use_cases.payment_use_cases.payment_config") as mock_config:
             mock_config.order_api_host = "http://order-service:8000"
-            mock_config.order_api_user = ""
-            mock_config.order_api_password = ""  # nosec - test value
+            mock_config.order_token = ""
             mock_config.callback_timeout_seconds = 10
             yield mock_config
 
@@ -162,12 +160,11 @@ class TestPaymentCallbackUseCase:
 
     async def test_execute_with_basic_auth(self, use_case, mock_repository, mock_payment_config):
         """
-        Given: payment_config has order_api_user and order_api_password
+        Given: payment_config has order_token set
         When: execute() is called
-        Then: Authorization header with Basic Auth is sent
+        Then: Authorization header with token is sent
         """
-        mock_payment_config.order_api_user = "admin"
-        mock_payment_config.order_api_password = "secret123"  # nosec - test value
+        mock_payment_config.order_token = "Bearer secret-token-123"
         
         transaction = PaymentTransaction.new(order_id=100, amount=25.0)
         transaction.id = "tx-auth"
@@ -187,17 +184,15 @@ class TestPaymentCallbackUseCase:
             
             # Verify Authorization header
             headers = mock_client.post.call_args[1]["headers"]
-            expected_token = base64.b64encode(b"admin:secret123").decode()
-            assert headers["Authorization"] == f"Basic {expected_token}"
+            assert headers["Authorization"] == "Bearer secret-token-123"
 
     async def test_execute_without_auth_credentials(self, use_case, mock_repository, mock_payment_config):
         """
-        Given: payment_config has empty user/password
+        Given: payment_config has empty order_token
         When: execute() is called
         Then: No Authorization header is sent
         """
-        mock_payment_config.order_api_user = ""
-        mock_payment_config.order_api_password = ""  # nosec - test value
+        mock_payment_config.order_token = ""
         
         transaction = PaymentTransaction.new(order_id=200, amount=50.0)
         transaction.id = "tx-no-auth"

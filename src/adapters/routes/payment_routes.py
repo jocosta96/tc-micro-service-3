@@ -1,5 +1,6 @@
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -27,9 +28,9 @@ class PaymentStatusResponse(BaseModel):
     order_id: int
     status: str
     callback_status: str
-    qr_or_link: Optional[str]
-    expires_at: Optional[datetime]
-    last_error: Optional[str]
+    qr_or_link: Optional[str] = None
+    expires_at: Optional[datetime] = None
+    last_error: Optional[str] = None
 
 
 payment_router = APIRouter(tags=["payment"], prefix="/payment")
@@ -78,3 +79,65 @@ async def payment_status(
             detail=result["error"].get("message"),
         )
     return result
+
+
+class PaymentSimulationRequest(BaseModel):
+    """Modelo para simular pagamento aprovado/rejeitado"""
+    approved: bool = True  # True = aprovado, False = rejeitado
+    message: Optional[str] = None
+
+
+@payment_router.post("/simulate-payment/{order_id}")
+async def simulate_payment(
+    order_id: int,
+    simulation: PaymentSimulationRequest,
+    controller: PaymentController = Depends(get_payment_controller),
+):
+    """
+    🔧 ENDPOINT DE TESTE/POC
+    
+    Simula recebimento de webhook do Mercado Pago para testar fluxo completo.
+    
+    **Fluxo de Uso**:
+    1. Cliente cria pedido no Order Service
+    2. Order Service chama `POST /payment/request/{order_id}`
+    3. Payment retorna `transaction_id` + QRCode mock
+    4. Para simular pagamento: `POST /simulate-payment/{order_id} {"approved": true}`
+    5. Payment processa e notifica Order automaticamente
+    
+    ⚠️ **Em produção**, este endpoint seria removido (webhook real do MP faria isso).
+    """
+    # Buscar transação diretamente pelo repository usando order_id
+    container = Container()
+    transaction = container.payment_repository.get_by_order(order_id)
+    
+    if not transaction:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No payment found for order {order_id}"
+        )
+    
+    # Montar payload do webhook simulado usando o ID correto
+    webhook_payload = {
+        "transaction_id": transaction.id,  # UUID correto da transação
+        "approval_status": simulation.approved,
+        "message": simulation.message or (
+            "Pagamento aprovado via PIX [SIMULADO]" if simulation.approved 
+            else "Pagamento rejeitado [SIMULADO]"
+        ),
+        "date": datetime.now(timezone.utc).isoformat(),
+        "event_id": f"sim-{uuid.uuid4()}"  # Event ID mock
+    }
+    
+    # Processar webhook
+    result = await controller.process_webhook(webhook_payload)
+    
+    return {
+        "message": "✅ Payment simulation completed",
+        "simulation": {
+            "order_id": order_id,
+            "approved": simulation.approved,
+            "transaction_id": transaction.id
+        },
+        "webhook_result": result
+    }

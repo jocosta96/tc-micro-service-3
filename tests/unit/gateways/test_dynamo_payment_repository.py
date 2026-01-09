@@ -466,18 +466,22 @@ class TestDynamoPaymentRepository:
         """
         Given: DynamoPaymentRepository initialized with custom table_name
         When: Repository created
-        Then: boto3 resource created with correct parameters
+        Then: boto3 Session.resource created with correct parameters
         """
-        with patch("src.adapters.gateways.dynamo_payment_repository.boto3.resource") as mock_resource:
+        with patch("src.adapters.gateways.dynamo_payment_repository.boto3.Session") as mock_session_class:
             mock_session = MagicMock()
-            mock_resource.return_value = mock_session
+            mock_dynamodb = MagicMock()
+            mock_table = MagicMock()
+            mock_dynamodb.Table.return_value = mock_table
+            mock_session.resource.return_value = mock_dynamodb
+            mock_session_class.return_value = mock_session
             
             # Execute
             repo = DynamoPaymentRepository(table_name="custom-table")
             
             # Verify
             assert repo.table_name == "custom-table"
-            mock_resource.assert_called_once_with(
+            mock_session.resource.assert_called_once_with(
                 "dynamodb",
                 region_name="us-east-1",
                 endpoint_url=None,

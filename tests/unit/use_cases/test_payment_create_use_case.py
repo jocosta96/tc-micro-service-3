@@ -54,7 +54,10 @@ class TestPaymentCreateUseCase:
         # Verify
         assert isinstance(response, PaymentCreateResponse)
         assert response.transaction_id is not None
-        assert response.qr_or_link == "https://pay.local/tx/123"
+        # QR code agora é gerado no formato mock PIX
+        assert response.qr_or_link.startswith("00020126")
+        assert "LANCHONETE" in response.qr_or_link
+        assert "PEDIDO#123" in response.qr_or_link
         assert response.expires_at is not None
         
         # Verify repository was called
@@ -174,7 +177,7 @@ class TestPaymentCreateUseCase:
         """
         Given: PaymentCreateRequest
         When: execute() is called
-        Then: Transaction qr_or_link follows expected pattern
+        Then: Transaction qr_or_link follows expected PIX mock pattern
         """
         request = PaymentCreateRequest(order_id=555, amount=99.99)
         
@@ -186,9 +189,12 @@ class TestPaymentCreateUseCase:
         # Execute
         use_case.execute(request)
         
-        # Verify qr_or_link pattern
+        # Verify qr_or_link mock PIX pattern
         call_args = mock_repository.upsert_by_order_if_pending.call_args[0][0]
-        assert call_args.qr_or_link == "https://pay.local/tx/555"
+        assert call_args.qr_or_link.startswith("00020126")
+        assert "LANCHONETE" in call_args.qr_or_link
+        assert "PEDIDO#555" in call_args.qr_or_link
+        assert "6304MOCK" in call_args.qr_or_link
 
     def test_execute_sets_default_status(self, use_case, mock_repository):
         """

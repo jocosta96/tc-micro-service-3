@@ -17,12 +17,21 @@ class DynamoPaymentRepository(PaymentRepository):
 
     def __init__(self, table_name: str = None):
         self.table_name = table_name or payment_config.table_name
-        session = boto3.resource(
+
+
+        client = boto3.Session(
+            region_name=payment_config.region_name,
+            aws_access_key_id=payment_config.dynamo_access_key_id or None,
+            aws_secret_access_key=payment_config.dynamo_secret_access_key or None,
+            aws_session_token=payment_config.dynamo_session_token or None,
+        )
+
+        ressource = client.resource(
             "dynamodb",
             region_name=payment_config.region_name,
             endpoint_url=payment_config.endpoint_url or None,
         )
-        self.table = session.Table(self.table_name)
+        self.table = ressource.Table(self.table_name)
 
     def create_pending(self, transaction: PaymentTransaction) -> PaymentTransaction:
         self.table.put_item(Item=transaction.to_item(), ConditionExpression="attribute_not_exists(id)")

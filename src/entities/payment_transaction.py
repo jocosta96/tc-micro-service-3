@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+from decimal import Decimal
 from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import uuid4
@@ -74,7 +75,7 @@ class PaymentTransaction:
         item = {
             "id": self.id,
             "order_id": self.order_id,
-            "amount": self.amount,
+            "amount": Decimal(str(self.amount)),  # Converter float para Decimal
             "status": self.status.value,
             "created_at": self.created_at.isoformat(),
             "updated_at": self.updated_at.isoformat(),

@@ -5,9 +5,11 @@ Phase 3: Controllers, Routes, Config, Logs
 Coverage Target: 80%+
 """
 import os
+import importlib
 from unittest.mock import patch
 
 from src.config.payment_config import PaymentConfig, payment_config
+import src.config.payment_config
 
 
 class TestPaymentConfig:
@@ -19,17 +21,29 @@ class TestPaymentConfig:
         When: PaymentConfig is instantiated
         Then: Uses default values
         """
-        with patch.dict(os.environ, {}, clear=True):
-            config = PaymentConfig()
+        env_vars = {
+            'PAYMENT_TABLE_NAME': 'payment-transactions',
+            'PAYMENT_ORDER_ID_INDEX': 'order_id-index',
+            'PAYMENT_AWS_REGION': 'us-east-1',
+            'PAYMENT_DYNAMO_ENDPOINT': '',
+            'ORDER_API_HOST': 'http://order-service:8000',
+            'ORDER_API_TOKEN': '',
+            'CALLBACK_TIMEOUT_SECONDS': '10'
+        }
+        
+        with patch.dict(os.environ, env_vars):
+            with patch('src.config.payment_config.get_ssm_client') as mock_ssm:
+                mock_ssm.return_value.get_parameter.return_value = None
+                # Reload module to re-read environment variables
+                importlib.reload(src.config.payment_config)
+                config = src.config.payment_config.payment_config
         
         assert config.table_name == "payment-transactions"
         assert config.order_id_index == "order_id-index"
         assert config.region_name == "us-east-1"
         assert config.endpoint_url == ""
         assert config.order_api_host == "http://order-service:8000"
-        assert config.order_api_user == ""
-        assert config.order_api_password == ""  # nosec - test value
-        assert config.webhook_secret == ""  # nosec - test value
+        assert config.order_token == ""
         assert config.callback_timeout_seconds == 10
 
     def test_payment_config_from_environment(self):
@@ -38,27 +52,29 @@ class TestPaymentConfig:
         When: PaymentConfig is instantiated
         Then: Uses environment values
         """
-        # Simulate environment by passing explicit values
-        config = PaymentConfig(
-            table_name="prod-payments",
-            order_id_index="prod-order-index",
-            region_name="eu-west-1",
-            endpoint_url="http://localhost:8000",
-            order_api_host="https://api.orders.prod",
-            order_api_user="payment-service",
-            order_api_password="secret123",
-            webhook_secret="webhook-key-456",
-            callback_timeout_seconds=30,
-        )
+        # Simulate environment variables
+        env_vars = {
+            "PAYMENT_TABLE_NAME": "prod-payments",
+            "PAYMENT_ORDER_ID_INDEX": "prod-order-index",
+            "PAYMENT_AWS_REGION": "eu-west-1",
+            "PAYMENT_DYNAMO_ENDPOINT": "http://localhost:8000",
+            "ORDER_API_HOST": "https://api.orders.prod",
+            "ORDER_API_TOKEN": "token-123",
+            "CALLBACK_TIMEOUT_SECONDS": "30",
+        }
+        
+        with patch.dict(os.environ, env_vars):
+            with patch('src.config.payment_config.get_ssm_client') as mock_ssm:
+                mock_ssm.return_value.get_parameter.return_value = None
+                importlib.reload(src.config.payment_config)
+                config = src.config.payment_config.payment_config
         
         assert config.table_name == "prod-payments"
         assert config.order_id_index == "prod-order-index"
         assert config.region_name == "eu-west-1"
         assert config.endpoint_url == "http://localhost:8000"
         assert config.order_api_host == "https://api.orders.prod"
-        assert config.order_api_user == "payment-service"
-        assert config.order_api_password == "secret123"  # nosec - test value
-        assert config.webhook_secret == "webhook-key-456"  # nosec - test value
+        assert config.order_token == "token-123"
         assert config.callback_timeout_seconds == 30
 
     def test_payment_config_partial_environment(self):
@@ -67,17 +83,28 @@ class TestPaymentConfig:
         When: PaymentConfig is instantiated
         Then: Uses environment values for set vars, defaults for others
         """
-        # Pass only some values, others use dataclass defaults
-        config = PaymentConfig(
-            table_name="staging-payments",
-            region_name="ap-south-1",
-        )
+        # Set only some environment variables
+        env_vars = {
+            "PAYMENT_TABLE_NAME": "staging-payments",
+            "PAYMENT_AWS_REGION": "ap-south-1",
+            'PAYMENT_ORDER_ID_INDEX': 'order_id-index',
+            'PAYMENT_DYNAMO_ENDPOINT': '',
+            'ORDER_API_HOST': 'http://order-service:8000',
+            'ORDER_API_TOKEN': '',
+            'CALLBACK_TIMEOUT_SECONDS': '10'
+        }
+        
+        with patch.dict(os.environ, env_vars):
+            with patch('src.config.payment_config.get_ssm_client') as mock_ssm:
+                mock_ssm.return_value.get_parameter.return_value = None
+                importlib.reload(src.config.payment_config)
+                config = src.config.payment_config.payment_config
         
         assert config.table_name == "staging-payments"
         assert config.region_name == "ap-south-1"
         # These should have kept their default values from class definition
-        assert config.order_id_index is not None
-        assert config.endpoint_url is not None
+        assert config.order_id_index == "order_id-index"
+        assert config.endpoint_url == ""
 
     def test_payment_config_callback_timeout_as_integer(self):
         """
@@ -85,9 +112,21 @@ class TestPaymentConfig:
         When: PaymentConfig is instantiated
         Then: Converts to integer correctly
         """
-        config = PaymentConfig(
-            callback_timeout_seconds=45
-        )
+        env_vars = {
+            "CALLBACK_TIMEOUT_SECONDS": "45",
+            'PAYMENT_TABLE_NAME': 'payment-transactions',
+            'PAYMENT_ORDER_ID_INDEX': 'order_id-index',
+            'PAYMENT_AWS_REGION': 'us-east-1',
+            'PAYMENT_DYNAMO_ENDPOINT': '',
+            'ORDER_API_HOST': 'http://order-service:8000',
+            'ORDER_API_TOKEN': ''
+        }
+        
+        with patch.dict(os.environ, env_vars):
+            with patch('src.config.payment_config.get_ssm_client') as mock_ssm:
+                mock_ssm.return_value.get_parameter.return_value = None
+                importlib.reload(src.config.payment_config)
+                config = src.config.payment_config.payment_config
         
         assert config.callback_timeout_seconds == 45
         assert isinstance(config.callback_timeout_seconds, int)
@@ -109,15 +148,13 @@ class TestPaymentConfig:
         Then: Uses empty strings (not defaults)
         """
         env_vars = {
-            "ORDER_API_USER": "",
-            "ORDER_API_PASSWORD": "",
-            "WEBHOOK_SECRET": "",
+            "ORDER_API_TOKEN": "",
         }
         
         with patch.dict(os.environ, env_vars, clear=True):
-            config = PaymentConfig()
+            with patch('src.config.payment_config.get_ssm_client') as mock_ssm:
+                mock_ssm.return_value.get_parameter.return_value = None
+                config = PaymentConfig()
         
-        # nosec: B105 - These are test assertions for empty values, not hardcoded passwords
-        assert config.order_api_user == ""  # nosec: B105
-        assert config.order_api_password == ""  # nosec: B105
-        assert config.webhook_secret == ""  # nosec: B105
+        # nosec: B105 - These are test assertions for empty values, not hardcoded tokens
+        assert config.order_token == ""  # nosec: B105
